@@ -4,7 +4,11 @@ const sequelize = new Sequelize(
   config.database,
   config.username,
   config.password,
-  config
+  {
+    host: config.host,
+    dialect: config.dialect,
+    port: "5432",
+  }
 );
 
 module.exports = sequelize;
