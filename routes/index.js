@@ -8,19 +8,32 @@ router.get("/status", async (req, res) => {
     await sequelize.authenticate();
     res.json({ message: "Connection has been established successfully." });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Unable to connect to the database.", error });
+    console.error("Database connection error:", error);
+    res.status(500).json({
+      message: "Unable to connect to the database.",
+      error: error.message,
+    });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
+    console.log("POST request received:", req.body);
     const { firstName, lastName } = req.body;
+
+    if (!firstName) {
+      return res.status(400).json({ message: "firstName is required" });
+    }
+
+    await sequelize.sync();
     const user = await User.create({ firstName, lastName });
+    console.log("User created:", user.toJSON());
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Unable to create user.", error });
+    console.error("Error creating user:", error);
+    res
+      .status(500)
+      .json({ message: "Unable to create user.", error: error.message });
   }
 });
 
@@ -34,16 +47,26 @@ router.delete("/:id", async (req, res) => {
     await user.destroy();
     res.json({ message: "User deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Unable to delete user.", error });
+    console.error("Error deleting user:", error);
+    res
+      .status(500)
+      .json({ message: "Unable to delete user.", error: error.message });
   }
 });
 
 router.get("/", async (req, res) => {
-  await sequelize.sync();
-  const userList = await User.findAll({
-    attributes: ["id", "firstName", "lastName"],
-  });
-  res.json(userList);
+  try {
+    await sequelize.sync();
+    const userList = await User.findAll({
+      attributes: ["id", "firstName", "lastName"],
+    });
+    res.json(userList);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res
+      .status(500)
+      .json({ message: "Unable to fetch users.", error: error.message });
+  }
 });
 
 module.exports = router;
