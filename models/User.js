@@ -1,26 +1,34 @@
-const {
-  Model,
-  Attribute,
-  DataTypes,
-  PrimaryKey,
-  AutoIncrement,
-  NotNull,
-} = require("@sequelize/core");
+const { Model, DataTypes } = require("@sequelize/core");
+const sequelize = require("../models/index.js");
 
-export class User extends Model {
-  @Attribute(DataTypes.INTEGER)
-  @PrimaryKey
-  @AutoIncrement
-  id;
-
-  @Attribute(DataTypes.STRING)
-  @NotNull
-  firstName;
-
-  @Attribute(DataTypes.STRING)
-  lastName;
-
+class User extends Model {
   getFullName() {
     return `${this.firstName} ${this.lastName}`;
   }
 }
+
+// Initialize the model
+User.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    firstName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+  },
+  {
+    sequelize,
+    modelName: "User",
+    tableName: "users",
+  }
+);
+
+module.exports = User;
