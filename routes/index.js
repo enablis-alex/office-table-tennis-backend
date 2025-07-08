@@ -25,6 +25,9 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "firstName is required" });
     }
 
+    console.log("firstName:", firstName);
+    console.log("lastName:", lastName);
+
     await sequelize.sync();
     const user = await User.create({ firstName, lastName });
     console.log("User created:", user.toJSON());
