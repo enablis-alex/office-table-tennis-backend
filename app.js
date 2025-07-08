@@ -1,9 +1,12 @@
 const express = require("express");
 const app = express();
 const routes = require("./routes/index.js");
+const cors = require("cors");
 
 // Initialize models
 require("./models/associations.js");
+
+app.use(cors());
 
 app.use("/api", routes);
 
