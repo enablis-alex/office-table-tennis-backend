@@ -16,8 +16,12 @@ router.get("/status", async (req, res) => {
 
 router.get("/", async (req, res) => {
   await sequelize.sync();
-  const user = await User.create({ firstName: "John", lastName: "Doe" });
-  res.json({ message: user.getFullName() });
+  await User.create({ firstName: "John", lastName: "Doe" });
+  await User.create({ firstName: "Jane", lastName: "Doe" });
+  const userList = await User.findAll({
+    attributes: ["firstName", "lastName"],
+  });
+  res.json(userList);
 });
 
 module.exports = router;
