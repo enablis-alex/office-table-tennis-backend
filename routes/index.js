@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const sequelize = require("../models/index.js");
-const { User } = require("../models/User.js");
+const User = require("../models/User.js");
 
 router.get("/status", async (req, res) => {
   try {
