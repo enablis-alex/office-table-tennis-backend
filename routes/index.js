@@ -18,18 +18,14 @@ router.get("/status", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    console.log("POST request received:", req.body);
     const { firstName, lastName } = req.body;
 
     if (!firstName) {
       return res.status(400).json({ message: "firstName is required" });
     }
 
-    console.log(req.body);
-
     await sequelize.sync();
     const user = await User.create({ firstName, lastName });
-    console.log("User created:", user.toJSON());
     res.json(user);
   } catch (error) {
     console.error("Error creating user:", error);

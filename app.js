@@ -9,6 +9,7 @@ require("./models/associations.js");
 app.use(cors());
 app.use(express.json());
 
+app.use(express.urlencoded({ extended: true }));
 app.use("/api", routes);
 
 const PORT = process.env.PORT || 3000;
