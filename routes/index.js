@@ -15,7 +15,7 @@ router.get("/status", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const user = User.build({ firstName: "John", lastName: "Doe" });
+  const user = await User.create({ firstName: "John", lastName: "Doe" });
   res.json({ message: user.getFullName() });
 });
 
