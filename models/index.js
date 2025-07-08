@@ -1,5 +1,7 @@
-const Sequelize = require("sequelize");
+const { Sequelize } = require("@sequelize/core");
 const config = require("../config/config.js")["development"];
+const { User } = require("./User.js");
+
 const sequelize = new Sequelize(
   config.database,
   config.username,
@@ -15,6 +17,9 @@ const sequelize = new Sequelize(
         rejectUnauthorized: false,
       },
     },
+  },
+  {
+    models: [User],
   }
 );
 

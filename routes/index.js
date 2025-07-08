@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const sequelize = require("../models/index.js");
+const { User } = require("../models/User.js");
 
 router.get("/status", async (req, res) => {
   try {
@@ -11,6 +12,11 @@ router.get("/status", async (req, res) => {
       .status(500)
       .json({ message: "Unable to connect to the database.", error });
   }
+});
+
+router.get("/", async (req, res) => {
+  const user = User.build({ firstName: "John", lastName: "Doe" });
+  res.json({ message: user.getFullName() });
 });
 
 module.exports = router;
