@@ -174,6 +174,100 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Predict ELO changes for a potential match between two players
+router.get("/predict", async (req, res) => {
+  try {
+    const { player1Id, player2Id } = req.query;
+
+    // Validation
+    if (!player1Id || !player2Id) {
+      return res.status(400).json({
+        message: "player1Id and player2Id query parameters are required",
+      });
+    }
+
+    if (player1Id === player2Id) {
+      return res.status(400).json({
+        message: "player1Id and player2Id must be different",
+      });
+    }
+
+    // Fetch both players
+    const player1 = await User.findByPk(player1Id);
+    const player2 = await User.findByPk(player2Id);
+
+    if (!player1) {
+      return res.status(404).json({ message: "Player 1 not found" });
+    }
+
+    if (!player2) {
+      return res.status(404).json({ message: "Player 2 not found" });
+    }
+
+    const player1Elo = player1.elo;
+    const player2Elo = player2.elo;
+    const player1GamesPlayed = player1.gamesPlayed || 0;
+    const player2GamesPlayed = player2.gamesPlayed || 0;
+
+    // Calculate ELO changes if player1 wins
+    const ifPlayer1Wins = calculateElo(
+      player1Elo,
+      player2Elo,
+      1, // player1 wins
+      player1GamesPlayed,
+      player2GamesPlayed
+    );
+
+    // Calculate ELO changes if player2 wins
+    const ifPlayer2Wins = calculateElo(
+      player1Elo,
+      player2Elo,
+      0, // player1 loses (player2 wins)
+      player1GamesPlayed,
+      player2GamesPlayed
+    );
+
+    res.json({
+      player1: {
+        id: player1.id,
+        firstName: player1.firstName,
+        lastName: player1.lastName,
+        currentElo: player1Elo,
+        gamesPlayed: player1GamesPlayed,
+        ifWins: {
+          eloChange: ifPlayer1Wins.player1EloChange,
+          newElo: ifPlayer1Wins.player1EloAfter,
+        },
+        ifLoses: {
+          eloChange: ifPlayer2Wins.player1EloChange,
+          newElo: ifPlayer2Wins.player1EloAfter,
+        },
+      },
+      player2: {
+        id: player2.id,
+        firstName: player2.firstName,
+        lastName: player2.lastName,
+        currentElo: player2Elo,
+        gamesPlayed: player2GamesPlayed,
+        ifWins: {
+          eloChange: ifPlayer2Wins.player2EloChange,
+          newElo: ifPlayer2Wins.player2EloAfter,
+        },
+        ifLoses: {
+          eloChange: ifPlayer1Wins.player2EloChange,
+          newElo: ifPlayer1Wins.player2EloAfter,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error predicting ELO changes:", error);
+    res.status(500).json({
+      message: "Unable to predict ELO changes.",
+      error: error.message,
+    });
+  }
+});
+
 // Get all games
 router.get("/", async (req, res) => {
   try {
