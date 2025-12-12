@@ -180,4 +180,71 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Delete a game and reverse ELO changes
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the game
+    const game = await Game.findByPk(id);
+
+    if (!game) {
+      return res.status(404).json({ message: "Game not found." });
+    }
+
+    // Fetch both players
+    const player1 = await User.findByPk(game.player1Id);
+    const player2 = await User.findByPk(game.player2Id);
+
+    if (!player1 || !player2) {
+      return res.status(404).json({
+        message: "One or both players not found. Cannot reverse ELO changes.",
+      });
+    }
+
+    // Reverse the ELO changes
+    // If player1 gained X points, subtract X. If player2 lost Y points, add Y back.
+    const player1NewElo = player1.elo - game.player1EloChange;
+    const player2NewElo = player2.elo - game.player2EloChange;
+
+    // Ensure ELO doesn't go below 0
+    const finalPlayer1Elo = Math.max(0, player1NewElo);
+    const finalPlayer2Elo = Math.max(0, player2NewElo);
+
+    // Store current ELO before reversal for response
+    const player1EloBeforeReversal = player1.elo;
+    const player2EloBeforeReversal = player2.elo;
+
+    // Update both players' ELO ratings (reverse the changes)
+    await player1.update({ elo: finalPlayer1Elo });
+    await player2.update({ elo: finalPlayer2Elo });
+
+    // Delete the game record
+    await game.destroy();
+
+    res.json({
+      message: "Game deleted successfully. ELO ratings have been reversed.",
+      reversedEloChanges: {
+        player1: {
+          id: player1.id,
+          eloBeforeReversal: player1EloBeforeReversal,
+          eloAfterReversal: finalPlayer1Elo,
+          change: -game.player1EloChange,
+        },
+        player2: {
+          id: player2.id,
+          eloBeforeReversal: player2EloBeforeReversal,
+          eloAfterReversal: finalPlayer2Elo,
+          change: -game.player2EloChange,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting game:", error);
+    res
+      .status(500)
+      .json({ message: "Unable to delete game.", error: error.message });
+  }
+});
+
 module.exports = router;
