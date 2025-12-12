@@ -4,6 +4,7 @@ const sequelize = require("../models/index.js");
 const Game = require("../models/Game.js");
 const User = require("../models/User.js");
 const { calculateElo } = require("../utils/eloCalculator.js");
+const { addGameForeignKeys } = require("../utils/addForeignKeys.js");
 
 // Record a new game
 router.post("/", async (req, res) => {
@@ -31,6 +32,8 @@ router.post("/", async (req, res) => {
 
     // Sync database to ensure Game table exists
     await sequelize.sync({ alter: true });
+    // Ensure foreign key constraints exist (sync doesn't always create them)
+    await addGameForeignKeys(sequelize);
 
     // Fetch both players
     const player1 = await User.findByPk(player1Id);
@@ -109,6 +112,8 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     await sequelize.sync({ alter: true });
+    // Ensure foreign key constraints exist
+    await addGameForeignKeys(sequelize);
     const games = await Game.findAll({
       include: [
         {
