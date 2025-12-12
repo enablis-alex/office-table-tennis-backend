@@ -28,6 +28,12 @@ User.init(
       allowNull: false,
       defaultValue: 1000,
     },
+    gamesPlayed: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      columnName: "games_played",
+    },
   },
   {
     sequelize,

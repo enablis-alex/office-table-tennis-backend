@@ -47,23 +47,33 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ message: "Player 2 not found" });
     }
 
-    // Store ELO ratings before the game
+    // Store ELO ratings and game counts before the game
     const player1EloBefore = player1.elo;
     const player2EloBefore = player2.elo;
+    const player1GamesPlayed = player1.gamesPlayed || 0;
+    const player2GamesPlayed = player2.gamesPlayed || 0;
 
     // Determine winner score (1 if player1 wins, 0 if player2 wins)
     const player1Score = winnerId === player1Id ? 1 : 0;
 
-    // Calculate new ELO ratings
+    // Calculate new ELO ratings with variable K-factors
     const eloResult = calculateElo(
       player1EloBefore,
       player2EloBefore,
-      player1Score
+      player1Score,
+      player1GamesPlayed,
+      player2GamesPlayed
     );
 
-    // Update player ELO ratings in database
-    await player1.update({ elo: eloResult.player1EloAfter });
-    await player2.update({ elo: eloResult.player2EloAfter });
+    // Update player ELO ratings and increment game count
+    await player1.update({
+      elo: eloResult.player1EloAfter,
+      gamesPlayed: player1GamesPlayed + 1,
+    });
+    await player2.update({
+      elo: eloResult.player2EloAfter,
+      gamesPlayed: player2GamesPlayed + 1,
+    });
 
     // Create game record
     const game = await Game.create({
@@ -211,13 +221,23 @@ router.delete("/:id", async (req, res) => {
     const finalPlayer1Elo = Math.max(0, player1NewElo);
     const finalPlayer2Elo = Math.max(0, player2NewElo);
 
-    // Store current ELO before reversal for response
+    // Decrement games played (but don't go below 0)
+    const player1NewGamesPlayed = Math.max(0, (player1.gamesPlayed || 0) - 1);
+    const player2NewGamesPlayed = Math.max(0, (player2.gamesPlayed || 0) - 1);
+
+    // Store current values before reversal for response
     const player1EloBeforeReversal = player1.elo;
     const player2EloBeforeReversal = player2.elo;
 
-    // Update both players' ELO ratings (reverse the changes)
-    await player1.update({ elo: finalPlayer1Elo });
-    await player2.update({ elo: finalPlayer2Elo });
+    // Update both players' ELO ratings and game counts (reverse the changes)
+    await player1.update({
+      elo: finalPlayer1Elo,
+      gamesPlayed: player1NewGamesPlayed,
+    });
+    await player2.update({
+      elo: finalPlayer2Elo,
+      gamesPlayed: player2NewGamesPlayed,
+    });
 
     // Delete the game record
     await game.destroy();
