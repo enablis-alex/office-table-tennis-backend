@@ -65,15 +65,44 @@ router.post("/", async (req, res) => {
       player2GamesPlayed
     );
 
-    // Update player ELO ratings and increment game count
-    await player1.update({
+    // Update player statistics
+    const player1Wins = player1.wins || 0;
+    const player1Losses = player1.losses || 0;
+    const player1Draws = player1.draws || 0;
+    const player2Wins = player2.wins || 0;
+    const player2Losses = player2.losses || 0;
+    const player2Draws = player2.draws || 0;
+
+    // Update player1 stats
+    const player1Update = {
       elo: eloResult.player1EloAfter,
       gamesPlayed: player1GamesPlayed + 1,
-    });
-    await player2.update({
+    };
+    if (winnerId === player1Id) {
+      player1Update.wins = player1Wins + 1;
+    } else if (winnerId === player2Id) {
+      player1Update.losses = player1Losses + 1;
+    } else {
+      // Draw (if winnerId is neither player, though unlikely in table tennis)
+      player1Update.draws = player1Draws + 1;
+    }
+
+    // Update player2 stats
+    const player2Update = {
       elo: eloResult.player2EloAfter,
       gamesPlayed: player2GamesPlayed + 1,
-    });
+    };
+    if (winnerId === player2Id) {
+      player2Update.wins = player2Wins + 1;
+    } else if (winnerId === player1Id) {
+      player2Update.losses = player2Losses + 1;
+    } else {
+      // Draw
+      player2Update.draws = player2Draws + 1;
+    }
+
+    await player1.update(player1Update);
+    await player2.update(player2Update);
 
     // Create game record
     const game = await Game.create({
@@ -94,17 +123,44 @@ router.post("/", async (req, res) => {
         {
           model: User,
           as: "player1",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "player2",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "winner",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
       ],
     });
@@ -129,17 +185,44 @@ router.get("/", async (req, res) => {
         {
           model: User,
           as: "player1",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "player2",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "winner",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -162,17 +245,44 @@ router.get("/:id", async (req, res) => {
         {
           model: User,
           as: "player1",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "player2",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
         {
           model: User,
           as: "winner",
-          attributes: ["id", "firstName", "lastName", "elo"],
+          attributes: [
+            "id",
+            "firstName",
+            "lastName",
+            "elo",
+            "gamesPlayed",
+            "wins",
+            "losses",
+            "draws",
+          ],
         },
       ],
     });
@@ -225,18 +335,57 @@ router.delete("/:id", async (req, res) => {
     const player1NewGamesPlayed = Math.max(0, (player1.gamesPlayed || 0) - 1);
     const player2NewGamesPlayed = Math.max(0, (player2.gamesPlayed || 0) - 1);
 
+    // Reverse win/loss/draw statistics
+    const player1Wins = Math.max(
+      0,
+      (player1.wins || 0) - (game.winnerId === game.player1Id ? 1 : 0)
+    );
+    const player1Losses = Math.max(
+      0,
+      (player1.losses || 0) - (game.winnerId === game.player2Id ? 1 : 0)
+    );
+    const player1Draws = Math.max(
+      0,
+      (player1.draws || 0) -
+        (game.winnerId !== game.player1Id && game.winnerId !== game.player2Id
+          ? 1
+          : 0)
+    );
+
+    const player2Wins = Math.max(
+      0,
+      (player2.wins || 0) - (game.winnerId === game.player2Id ? 1 : 0)
+    );
+    const player2Losses = Math.max(
+      0,
+      (player2.losses || 0) - (game.winnerId === game.player1Id ? 1 : 0)
+    );
+    const player2Draws = Math.max(
+      0,
+      (player2.draws || 0) -
+        (game.winnerId !== game.player1Id && game.winnerId !== game.player2Id
+          ? 1
+          : 0)
+    );
+
     // Store current values before reversal for response
     const player1EloBeforeReversal = player1.elo;
     const player2EloBeforeReversal = player2.elo;
 
-    // Update both players' ELO ratings and game counts (reverse the changes)
+    // Update both players' ELO ratings, game counts, and stats (reverse the changes)
     await player1.update({
       elo: finalPlayer1Elo,
       gamesPlayed: player1NewGamesPlayed,
+      wins: player1Wins,
+      losses: player1Losses,
+      draws: player1Draws,
     });
     await player2.update({
       elo: finalPlayer2Elo,
       gamesPlayed: player2NewGamesPlayed,
+      wins: player2Wins,
+      losses: player2Losses,
+      draws: player2Draws,
     });
 
     // Delete the game record

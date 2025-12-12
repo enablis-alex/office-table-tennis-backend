@@ -72,7 +72,16 @@ router.get("/", async (req, res) => {
   try {
     await sequelize.sync({ alter: true });
     const userList = await User.findAll({
-      attributes: ["id", "firstName", "lastName", "elo", "gamesPlayed"],
+      attributes: [
+        "id",
+        "firstName",
+        "lastName",
+        "elo",
+        "gamesPlayed",
+        "wins",
+        "losses",
+        "draws",
+      ],
     });
     res.json(userList);
   } catch (error) {
