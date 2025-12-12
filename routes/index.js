@@ -40,7 +40,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "firstName is required" });
     }
 
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     const user = await User.create({ firstName, lastName, elo });
     res.json(user);
   } catch (error) {
@@ -70,7 +70,7 @@ router.delete("/:id", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     const userList = await User.findAll({
       attributes: ["id", "firstName", "lastName", "elo"],
     });
