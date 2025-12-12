@@ -34,14 +34,14 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, elo } = req.body;
 
     if (!firstName) {
       return res.status(400).json({ message: "firstName is required" });
     }
 
     await sequelize.sync();
-    const user = await User.create({ firstName, lastName });
+    const user = await User.create({ firstName, lastName, elo });
     res.json(user);
   } catch (error) {
     console.error("Error creating user:", error);
@@ -72,7 +72,7 @@ router.get("/", async (req, res) => {
   try {
     await sequelize.sync();
     const userList = await User.findAll({
-      attributes: ["id", "firstName", "lastName"],
+      attributes: ["id", "firstName", "lastName", "elo"],
     });
     res.json(userList);
   } catch (error) {

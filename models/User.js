@@ -23,6 +23,11 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    elo: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1000,
+    },
   },
   {
     sequelize,
